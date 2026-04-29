@@ -1,0 +1,52 @@
+# ======================
+# Core Data Science
+# ======================
+numpy
+pandas
+scipy
+ 
+# ======================
+# Visualization
+# ======================
+matplotlib
+seaborn
+plotly
+ 
+# ======================
+# Machine Learning
+# ======================
+scikit-learn
+xgboost
+lightgbm
+ 
+# ======================
+# Deep Learning
+# ======================
+tensorflow
+
+ 
+# ======================
+# Model Interpretability
+# ======================
+shap
+ 
+# ======================
+# Data Processing / Utils
+# ======================
+joblib
+ 
+# ======================
+# Dashboard
+# ======================
+streamlit
+ 
+# ======================
+# API (optionnel mais recommandé)
+# ======================
+fastapi
+uvicorn
+ 
+# ======================
+# Misc
+# ======================
+tqdm
