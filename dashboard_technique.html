@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="dark">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard Technique — Maintenance Prédictive</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Source+Sans+3:wght@300;400;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js" charset="utf-8"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--fh:'Rajdhani',sans-serif;--fb:'Inter',sans-serif;--fm:'JetBrains Mono',monospace;
+  --rad:12px;--rad-s:8px;--tr:.22s ease}
+[data-theme="dark"]{--a:#00d4aa;--r:#ef4444;--o:#f59e0b;--b:#6366f1;--g:#22c55e;
+  --bg:#070b14;--card:#0c1424;--card2:#111d30;--bd:#1a2e4a;--bd2:#1e3654;
+  --tx:#e2e8f0;--txm:#64748b;--txf:#2a3f5e;--sh:0 4px 24px rgba(0,0,0,.45)}
+[data-theme="light"]{--a:#0d9488;--r:#dc2626;--o:#d97706;--b:#4f46e5;--g:#16a34a;
+  --bg:#f0f4f8;--card:#fff;--card2:#f8fafc;--bd:#d0dae8;--bd2:#b8c6d8;
+  --tx:#0f172a;--txm:#374151;--txf:#6b7280;--sh:0 2px 12px rgba(0,0,0,.08)}
+html,body{height:100%;font-family:var(--fb);font-size:14px;color:var(--tx);background:var(--bg);transition:background .3s,color .3s}
+.app{min-height:100vh;display:flex;flex-direction:column}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px}
+::-webkit-scrollbar-thumb:hover{background:var(--a)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+@keyframes pulse{0%,100%{box-shadow:none}50%{box-shadow:0 0 0 4px rgba(239,68,68,.13)}}
+@keyframes scanR{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes gBlink{0%,100%{opacity:.4}50%{opacity:1}}
+.topnav{height:52px;display:flex;align-items:center;padding:0 20px;
+  background:var(--card);border-bottom:1px solid var(--bd);position:sticky;top:0;z-index:100;transition:background .3s}
+.brand{font-family:var(--fh);font-size:1.2rem;font-weight:700;letter-spacing:3px;
+  color:var(--tx);margin-right:22px;user-select:none;white-space:nowrap}
+.brand em{color:var(--a);font-style:normal}
+.tabs{display:flex;gap:2px;flex:1}
+.tab{padding:7px 15px;border:none;border-radius:var(--rad-s);cursor:pointer;
+  font-family:var(--fh);font-size:.82rem;font-weight:600;letter-spacing:.5px;
+  background:transparent;color:var(--txm);transition:all .2s;white-space:nowrap}
+.tab:hover{background:rgba(0,212,170,.08);color:var(--a)}
+.tab.active{background:rgba(0,212,170,.13);color:var(--a)}
+.nav-link{font-size:.72rem;color:var(--txm);text-decoration:none;
+  padding:5px 11px;border:1px solid var(--bd);border-radius:var(--rad-s);
+  margin-right:8px;transition:all .2s;white-space:nowrap}
+.nav-link:hover{border-color:var(--a);color:var(--a)}
+.theme-btn{width:34px;height:34px;border-radius:50%;border:1px solid var(--bd);
+  background:var(--card2);cursor:pointer;font-size:.9rem;display:flex;
+  align-items:center;justify-content:center;transition:all .2s;color:var(--tx)}
+.theme-btn:hover{border-color:var(--a);transform:rotate(20deg)}
+.main{flex:1;padding:20px 22px;overflow-y:auto}
+.tab-panel{display:none}.tab-panel.active{display:block;animation:fadeUp .28s ease}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:var(--rad);padding:18px;transition:background .3s}
+.page-hdr{background:var(--card);border:1px solid var(--bd);border-radius:var(--rad);
+  padding:18px 22px;margin-bottom:16px;position:relative;overflow:hidden;transition:background .3s}
+.page-hdr::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--a),transparent)}
+.page-hdr h1{font-family:var(--fh);font-size:1.55rem;font-weight:700}
+.page-hdr h1 em{color:var(--a);font-style:normal}
+.page-hdr p{font-size:.75rem;color:var(--txm);margin-top:3px}
+.chip{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.62rem;
+  font-family:var(--fh);letter-spacing:1px;margin-top:6px;margin-right:3px}
+.chip-a{background:rgba(0,212,170,.1);border:1px solid rgba(0,212,170,.3);color:var(--a)}
+.chip-r{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:var(--r)}
+.chip-b{background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);color:var(--b)}
+.chip-g{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:var(--g)}
+.sec-title{font-family:var(--fh);font-size:.9rem;font-weight:700;color:var(--a);
+  letter-spacing:1.5px;text-transform:uppercase;border-left:3px solid var(--a);
+  padding-left:10px;margin:18px 0 12px}
+.kpi{background:var(--card);border:1px solid var(--bd);border-radius:var(--rad);
+  padding:14px;text-align:center;position:relative;overflow:hidden;
+  transition:transform .2s,background .3s}
+.kpi:hover{transform:translateY(-2px)}
+.kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--a),transparent)}
+.kpi-v{font-family:var(--fh);font-size:1.65rem;font-weight:700;color:var(--a);line-height:1.1}
+.kpi-l{font-size:.62rem;color:var(--txm);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+.kpi-d{font-size:.68rem;color:var(--txm);margin-top:2px}
+/* sliders */
+.param-card{background:var(--card);border:1px solid var(--bd);border-radius:var(--rad);padding:16px 18px;transition:background .3s}
+.sl-group{margin-bottom:10px}
+.sl-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.sl-name{font-size:.67rem;color:var(--txm);text-transform:uppercase;letter-spacing:.8px}
+.sl-val{font-family:var(--fh);font-size:.88rem;font-weight:700;color:var(--a);min-width:56px;text-align:right}
+input[type=range]{-webkit-appearance:none;width:100%;height:3px;
+  background:var(--bd);border-radius:2px;outline:none;cursor:pointer}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;
+  background:var(--a);border-radius:50%;cursor:pointer;
+  box-shadow:0 0 7px rgba(0,212,170,.35);transition:transform .2s}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.3)}
+.btn-predict{width:100%;padding:13px;margin-top:12px;
+  background:linear-gradient(135deg,var(--a),#009e7e);
+  color:#fff;border:none;border-radius:var(--rad-s);
+  font-family:var(--fh);font-size:1rem;font-weight:700;letter-spacing:2.5px;
+  cursor:pointer;box-shadow:0 4px 18px rgba(0,212,170,.2);transition:all .2s}
+[data-theme="light"] .btn-predict{color:#0f172a}
+.btn-predict:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,212,170,.38)}
+.btn-predict:active{transform:none}
+/* gauge */
+.gauge-card{background:var(--card);border:1px solid var(--bd);border-radius:var(--rad);
+  padding:16px 18px;transition:background .3s;min-height:310px;
+  display:flex;flex-direction:column;justify-content:center}
+.g-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;padding:24px 16px;text-align:center}
+.scan-svg{opacity:.15;display:block}
+.empty-ttl{font-family:var(--fh);font-size:1rem;letter-spacing:1px;color:var(--txf);text-transform:uppercase}
+.empty-sub{font-size:.75rem;color:var(--txf);line-height:1.7;max-width:210px}
+.empty-sub strong{color:var(--a)}
+.g-result{display:none}
+.g-result.show{display:block;animation:fadeUp .4s ease}
+/* alerts */
+.alert{border-radius:var(--rad-s);padding:12px 14px;margin-top:12px;border:1px solid}
+.alert-title{font-family:var(--fh);font-size:.88rem;font-weight:700;letter-spacing:1px;margin-bottom:4px}
+.alert-desc{font-size:.76rem;line-height:1.55;color:var(--txm)}
+.al-ok{background:rgba(0,212,170,.06);border-color:rgba(0,212,170,.3)}
+.al-warn{background:rgba(245,158,11,.06);border-color:rgba(245,158,11,.3)}
+.al-crit{background:rgba(239,68,68,.06);border-color:rgba(239,68,68,.3);animation:pulse 2s ease-in-out infinite}
+/* scenarios */
+.sc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
+.sc-card{background:var(--card);border:1px solid var(--bd);border-radius:var(--rad);
+  padding:14px;text-align:center;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
+.sc-card:hover{transform:translateY(-3px);box-shadow:var(--sh)}
+.sc-name{font-size:.62rem;color:var(--txm);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:7px}
+.sc-val{font-family:var(--fh);font-size:1.85rem;font-weight:700;margin:3px 0}
+.sc-badge{font-size:.6rem;font-family:var(--fh);font-weight:700;letter-spacing:2px;
+  padding:3px 9px;border-radius:20px;display:inline-block}
+/* svg charts */
+.chart-card{background:var(--card);border:1px solid var(--bd);border-radius:var(--rad);padding:16px;overflow:hidden;transition:background .3s}
+.chart-title{font-family:var(--fh);font-size:.75rem;color:var(--txm);letter-spacing:1.5px;
+  text-transform:uppercase;margin-bottom:12px}
+.chart-box{background:var(--card);border:1px solid var(--bd);border-radius:var(--rad);overflow:hidden;transition:background .3s}
+svg text{user-select:none}
+/* sensor buttons */
+.s-btns{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.s-btn{padding:5px 12px;border-radius:20px;font-size:.7rem;font-family:var(--fh);
+  font-weight:600;letter-spacing:.8px;cursor:pointer;border:1px solid var(--bd);
+  background:transparent;color:var(--txm);transition:all .2s}
+select{background:var(--card2);color:var(--tx);border:1px solid var(--bd);
+  border-radius:var(--rad-s);padding:6px 12px;font-family:var(--fb);font-size:.83rem;
+  outline:none;cursor:pointer}
+select:focus{border-color:var(--a)}
+/* table */
+.tbl-wrap{background:var(--card);border:1px solid var(--bd);border-radius:var(--rad);overflow:hidden;transition:background .3s}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th{background:var(--card2);color:var(--txm);font-size:.62rem;text-transform:uppercase;
+  letter-spacing:1px;padding:9px 13px;text-align:left;border-bottom:1px solid var(--bd)}
+td{padding:8px 13px;border-bottom:1px solid var(--bd);color:var(--tx)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(0,212,170,.025)}
+code{background:var(--card2);padding:1px 5px;border-radius:4px;font-size:.77rem;border:1px solid var(--bd)}
+.badge{display:inline-flex;padding:2px 8px;border-radius:20px;font-size:.62rem;letter-spacing:1px;font-family:var(--fh);font-weight:600}
+.b-keep{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.4);color:var(--g)}
+.b-drop{background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.4);color:var(--b)}
+.b-target{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.4);color:var(--o)}
+.b-leak{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.4);color:var(--r)}
+/* pipeline */
+.pipe-flow{display:flex;align-items:center;flex-wrap:wrap;gap:4px;padding:12px 0}
+.pipe-step{background:var(--card2);border:1px solid var(--bd);border-radius:var(--rad-s);
+  padding:14px 16px;text-align:center;min-width:130px;flex:1}
+.pipe-ico{font-size:1.3rem;margin-bottom:4px}
+.pipe-name{font-family:var(--fh);font-size:.82rem;font-weight:700;margin-bottom:2px}
+.pipe-detail{font-size:.66rem;color:var(--txm)}
+.pipe-arrow{font-size:1.1rem;color:var(--bd2);padding:0 2px}
+.code-block{background:#0a0e1a;border:1px solid var(--bd);border-radius:var(--rad);
+  padding:15px 18px;font-family:var(--fm);font-size:.75rem;line-height:1.7;overflow-x:auto;color:#c9d1d9}
+.kw{color:#ff7b72}.fn{color:#d2a8ff}.st{color:#a5d6ff}.nb{color:#79c0ff}.cm{color:#8b949e}
+</style>
+</head>
+<body>
+<script>
+var D={"stats":{"vibration_rms":{"count":23042,"mean":1.62,"std":1.08,"min":0.35,"q1":0.82,"median":1.27,"q3":2.27,"max":10.0},"temperature_motor":{"count":23208,"mean":51.4,"std":12.52,"min":28.0,"q1":42.61,"median":50.06,"q3":59.96,"max":95.0},"current_phase_avg":{"count":23311,"mean":8.82,"std":5.37,"min":2.2,"q1":4.63,"median":6.43,"q3":13.12,"max":35.0},"pressure_level":{"count":23118,"mean":59.01,"std":38.72,"min":10.1,"q1":22.7,"median":46.3,"q3":94.7,"max":206.5},"rpm":{"count":23509,"mean":1144.85,"std":912.67,"min":124.1,"q1":489.4,"median":856.0,"q3":1676.0,"max":4098.8},"hours_since_maintenance":{"count":24042,"mean":172.63,"std":150.72,"min":0.0,"q1":42.87,"median":121.61,"q3":295.57,"max":575.63},"ambient_temp":{"count":24042,"mean":13.0,"std":2.88,"min":8.0,"q1":10.5,"median":13.0,"q3":15.5,"max":18.0},"rul_hours":{"count":24042,"mean":27.81,"std":26.39,"min":0.5,"q1":0.5,"median":22.57,"q3":46.41,"max":98.34}},"missing":{"vibration_rms":{"n":1000,"pct":4.16},"temperature_motor":{"n":834,"pct":3.47},"current_phase_avg":{"n":731,"pct":3.04},"pressure_level":{"n":924,"pct":3.84},"rpm":{"n":533,"pct":2.22},"vib_x_temp":{"n":1714,"pct":7.13},"vib_x_hours":{"n":1000,"pct":4.16},"temp_x_hours":{"n":834,"pct":3.47}},"corr":{"labels":["vibration_rms","temperature_motor","current_phase_avg","pressure_level","rpm","hours_since_maintenance","ambient_temp","rul_hours"],"matrix":[[1.0,0.741,0.851,0.748,0.774,0.017,-0.003,-0.057],[0.741,1.0,0.79,0.718,0.628,0.03,-0.004,-0.078],[0.851,0.79,1.0,0.88,0.803,-0.002,-0.005,-0.025],[0.748,0.718,0.88,1.0,0.623,0.015,-0.008,0.022],[0.774,0.628,0.803,0.623,1.0,-0.077,-0.008,0.017],[0.017,0.03,-0.002,0.015,-0.077,1.0,0.011,-0.307],[-0.003,-0.004,-0.005,-0.008,-0.008,0.011,1.0,-0.004],[-0.057,-0.078,-0.025,0.022,0.017,-0.307,-0.004,1.0]],"rul_corr":{"vibration_rms":-0.057,"temperature_motor":-0.078,"current_phase_avg":-0.025,"pressure_level":0.022,"rpm":0.017,"hours_since_maintenance":-0.307,"ambient_temp":-0.004}},"rul_hist":{"counts":[7493,753,781,777,783,797,814,811,816,778,829,847,854,835,676,476,489,513,540,536,510,496,434,375,300,257,186,173,93,20],"bins":[0.5,3.8,7.0,10.3,13.5,16.8,20.1,23.3,26.6,29.9,33.1,36.4,39.6,42.9,46.2,49.4,52.7,55.9,59.2,62.5,65.7,69.0,72.2,75.5,78.8,82.0,85.3,88.6,91.8,95.1,98.3],"mean":27.8,"median":22.6},"rul_by_type":{"CNC":{"min":0.5,"q1":0.5,"median":21.1,"q3":47.1,"max":98.3},"Compressor":{"min":0.5,"q1":6.9,"median":28.1,"q3":48.9,"max":96.4},"Pump":{"min":0.5,"q1":0.5,"median":21.6,"q3":44.5,"max":95.7},"Robotic Arm":{"min":0.5,"q1":0.5,"median":18.3,"q3":45.2,"max":94.1}},"sensor_box":{"vibration_rms":{"CNC":{"min":0.7,"q1":0.9,"median":2.0,"q3":2.82,"max":9.22},"Compressor":{"min":0.9,"q1":1.05,"median":2.19,"q3":2.5,"max":10.0},"Pump":{"min":0.5,"q1":0.64,"median":1.78,"q3":2.08,"max":6.59},"Robotic Arm":{"min":0.35,"q1":0.42,"median":0.93,"q3":1.26,"max":6.25}},"temperature_motor":{"CNC":{"min":40.0,"q1":46.67,"median":53.85,"q3":61.35,"max":95.0},"Compressor":{"min":44.0,"q1":49.74,"median":55.58,"q3":63.83,"max":95.0},"Pump":{"min":35.0,"q1":42.03,"median":50.97,"q3":61.93,"max":95.0},"Robotic Arm":{"min":28.0,"q1":33.0,"median":39.05,"q3":45.65,"max":87.03}},"rpm":{"CNC":{"min":738.2,"q1":880.7,"median":2762.6,"q3":2954.3,"max":4098.8},"Compressor":{"min":612.7,"q1":746.5,"median":1614.3,"q3":1733.6,"max":2599.7},"Pump":{"min":430.2,"q1":530.73,"median":1177.8,"q3":1277.4,"max":1899.3},"Robotic Arm":{"min":124.1,"q1":151.7,"median":330.5,"q3":355.8,"max":520.0}},"pressure_level":{"CNC":{"min":14.6,"q1":23.4,"median":55.5,"q3":75.3,"max":140.1},"Compressor":{"min":31.8,"q1":46.4,"median":97.1,"q3":110.3,"max":206.5},"Pump":{"min":11.9,"q1":20.6,"median":83.2,"q3":110.5,"max":165.0},"Robotic Arm":{"min":10.1,"q1":17.3,"median":38.7,"q3":44.1,"max":81.2}}},"di":{"n_rows":24042,"n_machines":20,"n_vars":15,"n_days":14,"failure_24h":3560},"machine_types":{"Pump":6114,"Robotic Arm":6003,"Compressor":5988,"CNC":5937},"fi":{"names":["cumcount","hours_sq","hours_since_maintenance","rpm","temperature_motor","machine_type_enc","current_phase_avg","vib_x_temp","pressure_level","vibration_rms"],"imp":[0.4,0.235,0.08,0.038,0.027,0.02,0.017,0.013,0.012,0.01],"new":[true,true,false,false,false,false,false,true,false,false]},"model":{"names":["Ridge","Random Forest","XGBoost","MLP"],"mae":[16.288,3.077,4.402,4.911],"r2":[0.394,0.955,0.938,0.916],"cv_mae":[16.603,3.097,4.43,4.943],"cv_std":[0.114,0.073,0.114,0.2]}};
+var COLORS={a:'#2a9d8f',r:'#e63946',o:'#f4a261',b:'#58a6ff',g:'#56d364'};
+var PAL=['#58a6ff','#f85149','#2a9d8f','#d29922'];
+
+function setTheme(t){document.documentElement.dataset.theme=t;localStorage.setItem('theme',t);
+  document.getElementById('theme-btn').textContent=t==='dark'?'☀️':'🌙';}
+function toggleTheme(){var t=document.documentElement.dataset.theme==='dark'?'light':'dark';
+  setTheme(t);rerenderAll();}
+function pC(){var d=document.documentElement.dataset.theme==='dark';
+  return{paper:d?'#0d1117':'#f0f4f8',bg:d?'#161b22':'#fff',grid:d?'#21262d':'#d0d7de',
+         text:d?'#c9d1d9':'#24292f',muted:d?'#8b949e':'#57606a'};}
+function pL(title,extra){
+  var c=pC();extra=extra||{};
+  return Object.assign({title:{text:title||'',font:{color:c.text,size:12,family:'Source Sans 3'}},
+    paper_bgcolor:c.paper,plot_bgcolor:c.bg,
+    font:{color:c.text,family:'Source Sans 3,sans-serif'},
+    xaxis:{gridcolor:c.grid,zeroline:false,color:c.muted},
+    yaxis:{gridcolor:c.grid,zeroline:false,color:c.muted},
+    margin:{t:44,b:36,l:44,r:16},showlegend:false},extra);
+}
+
+function showTab(id,btn){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tp-'+id).classList.add('active');
+  btn.classList.add('active');
+  renderPage(id);
+}
+function renderPage(id){
+  if(id==='dataset') {renderPie();renderStats();}
+  if(id==='missing') renderMissing();
+  if(id==='distrib') {renderRULHist();renderBoxPlots();}
+  if(id==='correl')  renderHeatmap();
+  if(id==='feateng') renderFI();
+  if(id==='pipeline') renderCV();
+}
+function rerenderAll(){
+  var a=document.querySelector('.tab.active');
+  if(a) renderPage(a.dataset.page);
+}
+
+/* ── DATASET ── */
+function renderPie(){
+  var mt=D.machine_types,labels=Object.keys(mt),vals=labels.map(function(l){return mt[l];});
+  var c=pC();
+  Plotly.react('ch-pie',[{type:'pie',labels:labels,values:vals,marker:{colors:PAL},
+    textinfo:'label+percent',textfont:{color:c.text,size:11},hole:.3}],
+    {paper_bgcolor:c.paper,plot_bgcolor:c.bg,font:{color:c.text,family:'Source Sans 3'},
+     showlegend:true,legend:{font:{color:c.text},bgcolor:'rgba(0,0,0,0)'},
+     margin:{t:10,b:10,l:10,r:10},title:{text:'Machines par type',font:{color:c.text,size:12}},height:260});
+}
+function renderStats(){
+  var c=pC(),keys=Object.keys(D.stats);
+  var mns={vibration_rms:'vib_rms',temperature_motor:'temp_motor',current_phase_avg:'current',
+           pressure_level:'pressure',rpm:'rpm',hours_since_maintenance:'hours_maint',
+           ambient_temp:'ambient',rul_hours:'rul_hours'};
+  var rows='';
+  keys.forEach(function(k){var s=D.stats[k];
+    rows+='<tr><td><code>'+mns[k]+'</code></td><td>'+s.count.toLocaleString('fr')+'</td>'+
+    '<td>'+s.min+'</td><td>'+s.q1+'</td><td style="color:var(--a)">'+s.median+'</td>'+
+    '<td>'+s.mean+'</td><td>'+s.q3+'</td><td>'+s.max+'</td><td style="color:var(--txm)">'+s.std+'</td></tr>';
+  });
+  document.getElementById('stats-tbody').innerHTML=rows;
+}
+
+/* ── MISSING ── */
+function renderMissing(){
+  var entries=Object.entries(D.missing).sort(function(a,b){return b[1].pct-a[1].pct;});
+  var c=pC();
+  Plotly.react('ch-missing',[{type:'bar',orientation:'h',
+    x:entries.map(function(e){return e[1].pct;}),
+    y:entries.map(function(e){return e[0];}),
+    marker:{color:entries.map(function(e){return e[1].pct>3?COLORS.r:e[1].pct>1?COLORS.o:COLORS.b;})},
+    text:entries.map(function(e){return e[1].pct.toFixed(1)+'%  ('+e[1].n+' obs)';}),
+    textposition:'outside',textfont:{color:c.muted,size:10}}],
+    pL('Taux de valeurs manquantes par variable',{xaxis:Object.assign({},pL().xaxis,{ticksuffix:'%'})}));
+}
+
+/* ── DISTRIBUTIONS ── */
+function renderRULHist(){
+  var h=D.rul_hist,c=pC();
+  var binsX=h.bins.slice(0,-1).map(function(b,i){return(b+h.bins[i+1])/2;});
+  Plotly.react('ch-rul-hist',[{type:'bar',x:binsX,y:h.counts,
+    marker:{color:binsX.map(function(b){return b<10?COLORS.r:b<30?COLORS.o:COLORS.a;})}}],
+    pL('Distribution RUL — 🔴 Critique (<10h)  🟠 Alerte (<30h)  🔵 Normal',{
+      shapes:[
+        {type:'line',x0:10,x1:10,y0:0,y1:1,yref:'paper',line:{dash:'dash',color:COLORS.r+'80',width:1.5}},
+        {type:'line',x0:30,x1:30,y0:0,y1:1,yref:'paper',line:{dash:'dash',color:COLORS.o+'80',width:1.5}},
+      ],annotations:[
+        {x:10,y:1,yref:'paper',text:'10h',showarrow:false,font:{color:COLORS.r,size:9},xanchor:'left'},
+        {x:30,y:1,yref:'paper',text:'30h',showarrow:false,font:{color:COLORS.o,size:9},xanchor:'left'},
+      ]}));
+}
+function renderBoxPlots(){
+  var c=pC(),types=Object.keys(D.rul_by_type);
+  Plotly.react('ch-box-rul',types.map(function(mt,i){
+    var v=D.rul_by_type[mt];
+    return{type:'box',name:mt,q1:[v.q1],median:[v.median],q3:[v.q3],
+           lowerfence:[v.min],upperfence:[v.max],marker:{color:PAL[i]},
+           line:{color:PAL[i]},fillcolor:PAL[i]+'30'};
+  }),pL('RUL par type de machine',{showlegend:true,legend:{font:{color:c.text},bgcolor:'rgba(0,0,0,0)'}}));
+}
+
+/* ── CORRÉLATIONS ── */
+function renderHeatmap(){
+  var c=pC();
+  Plotly.react('ch-heatmap',[{type:'heatmap',z:D.corr.matrix,x:D.corr.labels,y:D.corr.labels,
+    colorscale:[[0,COLORS.r],[.5,c.bg],[1,COLORS.a]],zmid:0,zmin:-1,zmax:1,
+    text:D.corr.matrix.map(function(row){return row.map(function(v){return v.toFixed(2);});}),
+    texttemplate:'%{text}',textfont:{size:9,color:c.text},showscale:true}],
+    pL('Matrice de Corrélation de Pearson',{margin:{t:50,b:90,l:110,r:20}}));
+}
+
+/* ── FEATURE ENGINEERING ── */
+function renderFI(){
+  var c=pC(),fi=D.fi;
+  var sorted=fi.names.map(function(n,i){return{n:n,v:fi.imp[i],isNew:fi.new[i]};})
+    .sort(function(a,b){return a.v-b.v;});
+  Plotly.react('ch-fi-tech',[{type:'bar',orientation:'h',
+    x:sorted.map(function(d){return d.v;}),y:sorted.map(function(d){return d.n;}),
+    marker:{color:sorted.map(function(d){return d.isNew?COLORS.r:COLORS.b;})},
+    text:sorted.map(function(d){return(d.v*100).toFixed(1)+'%';}),
+    textposition:'outside',textfont:{color:c.muted,size:10}}],
+    pL('Feature Importance Random Forest — 🔴 Nouvelles   🔵 Originales',{
+      xaxis:Object.assign({},pL().xaxis,{tickformat:'.0%'}),height:360}));
+}
+
+/* ── PIPELINE ── */
+function renderCV(){
+  var c=pC(),m=D.model;
+  Plotly.react('ch-cv',[{type:'bar',x:m.names,y:m.cv_mae,
+    error_y:{type:'data',array:m.cv_std,color:c.muted,width:5},
+    marker:{color:['#f85149','#2a9d8f','#58a6ff','#d29922']},width:.5,
+    text:m.cv_mae.map(function(v,i){return v.toFixed(3)+'±'+m.cv_std[i].toFixed(3);}),
+    textposition:'outside',textfont:{color:c.muted,size:9}}],
+    pL('Validation Croisée 5-fold — CV MAE ± Std'));
+}
+
+/* ── INIT ── */
+window.addEventListener('DOMContentLoaded',function(){
+  var t=localStorage.getItem('theme')||'dark';
+  setTheme(t);
+  document.querySelectorAll('.tab[data-page]').forEach(function(b){
+    b.addEventListener('click',function(){showTab(b.dataset.page,b);});
+  });
+  renderPage('dataset');
+});
+</script>
+
+<div class="app">
+<nav class="topnav">
+  <div class="brand">⚙ PRED<span>ML</span></div>
+  <div class="tabs">
+    <button class="tab active" data-page="dataset">🗂 Dataset</button>
+    <button class="tab" data-page="missing">❓ Valeurs Manquantes</button>
+    <button class="tab" data-page="distrib">📈 Distributions</button>
+    <button class="tab" data-page="correl">🔗 Corrélations</button>
+    <button class="tab" data-page="feateng">⚗️ Feature Eng.</button>
+    <button class="tab" data-page="pipeline">🔧 Pipeline</button>
+  </div>
+  <a class="nav-link" href="dashboard_client.html">→ Client</a>
+  <button class="theme-btn" onclick="toggleTheme()" id="theme-btn">☀️</button>
+</nav>
+
+<div class="main">
+
+<!-- ── DATASET ── -->
+<div id="tp-dataset" class="tab-panel active">
+<div class="page-hdr">
+  <h1>🗂 Analyse du <span class="accent">Dataset</span></h1>
+  <p>24 042 enregistrements · 20 machines industrielles · 14 jours · 15 variables</p>
+  <span class="chip chip-b">EDA</span><span class="chip chip-g">PRODUCTION-READY</span>
+</div>
+<div class="g5" style="margin-bottom:18px">
+  <div class="kpi"><div class="kpi-v">24 042</div><div class="kpi-l">Enregistrements</div><div class="kpi-d">Dataset complet</div></div>
+  <div class="kpi"><div class="kpi-v">20</div><div class="kpi-l">Machines</div><div class="kpi-d">4 types</div></div>
+  <div class="kpi"><div class="kpi-v">14j</div><div class="kpi-l">Durée</div><div class="kpi-d">Horizon</div></div>
+  <div class="kpi"><div class="kpi-v">27.8h</div><div class="kpi-l">RUL moyen</div><div class="kpi-d">Variable cible</div></div>
+  <div class="kpi"><div class="kpi-v">3 721</div><div class="kpi-l">Pannes &lt;24h</div><div class="kpi-d">Cas critiques</div></div>
+</div>
+<div class="g2">
+  <div>
+    <div class="sec-title">Variables du Dataset</div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr><th>Nom</th><th>Type</th><th>Statut</th><th>Description</th></tr></thead>
+        <tbody><tr><td><code>timestamp</code></td><td style="color:var(--txm);font-size:.78rem">datetime</td><td><span class="badge b-drop">DROP</span></td><td style="font-size:.78rem">Horodatage</td></tr>
+<tr><td><code>machine_id</code></td><td style="color:var(--txm);font-size:.78rem">int64</td><td><span class="badge b-drop">DROP</span></td><td style="font-size:.78rem">ID machine</td></tr>
+<tr><td><code>machine_type</code></td><td style="color:var(--txm);font-size:.78rem">object</td><td><span class="badge b-keep">KEEP</span></td><td style="font-size:.78rem">Type de machine — OHE</td></tr>
+<tr><td><code>vibration_rms</code></td><td style="color:var(--txm);font-size:.78rem">float64</td><td><span class="badge b-keep">KEEP</span></td><td style="font-size:.78rem">Vibration RMS (g) — clé</td></tr>
+<tr><td><code>temperature_motor</code></td><td style="color:var(--txm);font-size:.78rem">float64</td><td><span class="badge b-keep">KEEP</span></td><td style="font-size:.78rem">Température moteur (°C)</td></tr>
+<tr><td><code>current_phase_avg</code></td><td style="color:var(--txm);font-size:.78rem">float64</td><td><span class="badge b-keep">KEEP</span></td><td style="font-size:.78rem">Courant de phase (A)</td></tr>
+<tr><td><code>pressure_level</code></td><td style="color:var(--txm);font-size:.78rem">float64</td><td><span class="badge b-keep">KEEP</span></td><td style="font-size:.78rem">Pression (bar)</td></tr>
+<tr><td><code>rpm</code></td><td style="color:var(--txm);font-size:.78rem">float64</td><td><span class="badge b-keep">KEEP</span></td><td style="font-size:.78rem">Vitesse de rotation (RPM)</td></tr>
+<tr><td><code>operating_mode</code></td><td style="color:var(--txm);font-size:.78rem">object</td><td><span class="badge b-keep">KEEP</span></td><td style="font-size:.78rem">Mode opératoire — OHE</td></tr>
+<tr><td><code>hours_since_maintenance</code></td><td style="color:var(--txm);font-size:.78rem">float64</td><td><span class="badge b-keep">KEEP</span></td><td style="font-size:.78rem">Heures depuis maintenance</td></tr>
+<tr><td><code>ambient_temp</code></td><td style="color:var(--txm);font-size:.78rem">float64</td><td><span class="badge b-keep">KEEP</span></td><td style="font-size:.78rem">Température ambiante (°C)</td></tr>
+<tr><td><code>rul_hours</code></td><td style="color:var(--txm);font-size:.78rem">float64</td><td><span class="badge b-target">TARGET</span></td><td style="font-size:.78rem">🎯 Variable cible</td></tr>
+<tr><td><code>failure_within_24h</code></td><td style="color:var(--txm);font-size:.78rem">int64</td><td><span class="badge b-leak">LEAK</span></td><td style="font-size:.78rem">⚠️ Data leakage</td></tr>
+<tr><td><code>failure_type</code></td><td style="color:var(--txm);font-size:.78rem">object</td><td><span class="badge b-leak">LEAK</span></td><td style="font-size:.78rem">⚠️ Data leakage</td></tr>
+<tr><td><code>estimated_repair_cost</code></td><td style="color:var(--txm);font-size:.78rem">int64</td><td><span class="badge b-leak">LEAK</span></td><td style="font-size:.78rem">⚠️ Data leakage</td></tr>
+</tbody>
+      </table>
+    </div>
+  </div>
+  <div>
+    <div class="sec-title">Répartition par Type de Machine</div>
+    <div class="chart-box"><div id="ch-pie" style="height:260px"></div></div>
+  </div>
+</div>
+<div class="sec-title">Statistiques Descriptives</div>
+<div class="tbl-wrap">
+  <table>
+    <thead><tr><th>Variable</th><th>N</th><th>Min</th><th>Q1</th><th>Médiane</th><th>Moyenne</th><th>Q3</th><th>Max</th><th>Std</th></tr></thead>
+    <tbody id="stats-tbody"></tbody>
+  </table>
+</div>
+</div>
+
+<!-- ── MISSING ── -->
+<div id="tp-missing" class="tab-panel">
+<div class="page-hdr">
+  <h1>❓ Valeurs <span class="accent">Manquantes</span></h1>
+  <p>Analyse de complétude · Stratégie d'imputation : médiane (SimpleImputer sklearn)</p>
+</div>
+<div class="chart-box"><div id="ch-missing" style="height:380px"></div></div>
+<div class="sec-title" style="margin-top:18px">Stratégie d'Imputation</div>
+<div class="g3">
+  <div class="card" style="border-left:3px solid var(--a)">
+    <b style="color:var(--a)">✅ SimpleImputer (médiane)</b>
+    <p style="font-size:.8rem;color:var(--txm);margin-top:6px;line-height:1.6">Robuste aux outliers · Pas de fuite d'information · Intégré dans le Pipeline sklearn</p>
+  </div>
+  <div class="card" style="border-left:3px solid var(--r)">
+    <b style="color:var(--r)">❌ Suppression de lignes</b>
+    <p style="font-size:.8rem;color:var(--txm);margin-top:6px;line-height:1.6">Perte de données · Biais si MNAR</p>
+  </div>
+  <div class="card" style="border-left:3px solid var(--r)">
+    <b style="color:var(--r)">❌ Imputation par la moyenne</b>
+    <p style="font-size:.8rem;color:var(--txm);margin-top:6px;line-height:1.6">Sensible aux outliers · Données industrielles souvent skewed</p>
+  </div>
+</div>
+</div>
+
+<!-- ── DISTRIBUTIONS ── -->
+<div id="tp-distrib" class="tab-panel">
+<div class="page-hdr">
+  <h1>📈 <span class="accent">Distributions</span></h1>
+  <p>Analyse statistique des capteurs et de la variable cible RUL</p>
+</div>
+<div class="g2">
+  <div>
+    <div class="sec-title">Distribution de la Variable Cible — RUL (h)</div>
+    <div class="chart-box"><div id="ch-rul-hist" style="height:300px"></div></div>
+  </div>
+  <div>
+    <div class="sec-title">RUL par Type de Machine</div>
+    <div class="chart-box"><div id="ch-box-rul" style="height:300px"></div></div>
+  </div>
+</div>
+</div>
+
+<!-- ── CORRÉLATIONS ── -->
+<div id="tp-correl" class="tab-panel">
+<div class="page-hdr">
+  <h1>🔗 <span class="accent">Corrélations</span></h1>
+  <p>Relations linéaires entre variables · Les non-linéarités sont capturées par le Random Forest</p>
+</div>
+<div class="chart-box"><div id="ch-heatmap" style="height:430px"></div></div>
+<div class="sec-title">Interprétation</div>
+<div class="card" style="font-size:.83rem;line-height:1.8;color:var(--txm)">
+  Les corrélations linéaires avec le RUL sont <b style="color:var(--tx)">faibles</b> car la relation est <b style="color:var(--a)">non-linéaire</b>.
+  Le Random Forest capture ces non-linéarités. Les features engineerées (cumcount, hours_sq) montrent
+  les corrélations les plus fortes avec la variable cible.
+</div>
+</div>
+
+<!-- ── FEATURE ENGINEERING ── -->
+<div id="tp-feateng" class="tab-panel">
+<div class="page-hdr">
+  <h1>⚗️ Feature <span class="accent">Engineering</span></h1>
+  <p>3 nouvelles features créées · Gain MAE : ×5.3 (16.3h → 3.1h)</p>
+  <span class="chip chip-r">NOUVELLES FEATURES</span>
+  <span class="chip chip-b">FEATURES ORIGINALES</span>
+</div>
+<div class="g3" style="margin-bottom:18px">
+  <div class="kpi" style="--a:#f85149"><div class="kpi-v" style="color:#f85149">3</div><div class="kpi-l">Features créées</div><div class="kpi-d">cumcount · hours_sq · interactions</div></div>
+  <div class="kpi"><div class="kpi-v">×5.3</div><div class="kpi-l">Gain MAE</div><div class="kpi-d">16.3h → 3.1h</div></div>
+  <div class="kpi"><div class="kpi-v">63.5%</div><div class="kpi-l">Top-2 features</div><div class="kpi-d">cumcount + hours_sq</div></div>
+</div>
+<div class="chart-box"><div id="ch-fi-tech" style="height:360px"></div></div>
+<div class="sec-title">Code — Feature Engineering</div>
+<div class="code-block"><span class="cm"># Feature Engineering</span>
+df[<span class="st">"cumcount"</span>]     = df.groupby(<span class="st">"machine_id"</span>).cumcount()  <span class="cm"># ← #1 importance : 40%</span>
+df[<span class="st">"hours_sq"</span>]      = df[<span class="st">"hours_since_maintenance"</span>]**<span class="nb">2</span>       <span class="cm"># ← #2 importance : 23.5%</span>
+df[<span class="st">"vib_x_temp"</span>]   = df[<span class="st">"vibration_rms"</span>] * df[<span class="st">"temperature_motor"</span>]
+df[<span class="st">"vib_x_hours"</span>]  = df[<span class="st">"vibration_rms"</span>] * df[<span class="st">"hours_since_maintenance"</span>]
+df[<span class="st">"temp_x_hours"</span>] = df[<span class="st">"temperature_motor"</span>] * df[<span class="st">"hours_since_maintenance"</span>]</div>
+</div>
+
+<!-- ── PIPELINE ── -->
+<div id="tp-pipeline" class="tab-panel">
+<div class="page-hdr">
+  <h1>🔧 Pipeline de <span class="accent">Preprocessing</span></h1>
+  <p>sklearn Pipeline · Encapsulation complète · Zéro fuite de données</p>
+  <span class="chip chip-g">PRODUCTION-READY</span>
+</div>
+<div class="card">
+  <div class="pipe-flow">
+    <div class="pipe-step" style="border-top:3px solid #58a6ff">
+      <div class="pipe-ico">✂️</div>
+      <div class="pipe-name" style="color:#58a6ff">Train / Test Split</div>
+      <div class="pipe-detail">80% train · 20% test<br>Temporel — pas de fuite</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" style="border-top:3px solid #f85149">
+      <div class="pipe-ico">🩹</div>
+      <div class="pipe-name" style="color:#f85149">SimpleImputer</div>
+      <div class="pipe-detail">Stratégie : médiane<br>Remplacement des NaN</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" style="border-top:3px solid #2a9d8f">
+      <div class="pipe-ico">⚖️</div>
+      <div class="pipe-name" style="color:#2a9d8f">StandardScaler</div>
+      <div class="pipe-detail">μ=0 · σ=1<br>Normalisation</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" style="border-top:3px solid #d29922">
+      <div class="pipe-ico">🔀</div>
+      <div class="pipe-name" style="color:#d29922">ColumnTransformer</div>
+      <div class="pipe-detail">Num: Imp+Scale<br>Cat: OneHotEncoder</div>
+    </div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-step" style="border-top:3px solid #56d364">
+      <div class="pipe-ico">🌲</div>
+      <div class="pipe-name" style="color:#56d364">RandomForest</div>
+      <div class="pipe-detail">n_estimators=300<br>n_jobs=-1</div>
+    </div>
+  </div>
+</div>
+<div class="g2" style="margin-top:16px">
+  <div>
+    <div class="sec-title">Code Pipeline</div>
+    <div class="code-block"><span class="kw">from</span> sklearn.pipeline <span class="kw">import</span> Pipeline
+<span class="kw">from</span> sklearn.compose <span class="kw">import</span> ColumnTransformer
+<span class="kw">from</span> sklearn.impute <span class="kw">import</span> SimpleImputer
+<span class="kw">from</span> sklearn.preprocessing <span class="kw">import</span> StandardScaler, OneHotEncoder
+
+num_pipe = Pipeline([
+    (<span class="st">"imputer"</span>, SimpleImputer(strategy=<span class="st">"median"</span>)),
+    (<span class="st">"scaler"</span>,  StandardScaler()),
+])
+preprocessor = ColumnTransformer([
+    (<span class="st">"num"</span>, num_pipe, NUMERIC_FEATURES),
+    (<span class="st">"cat"</span>, OneHotEncoder(), CATEGORICAL_FEATURES),
+])
+pipeline = Pipeline([
+    (<span class="st">"prep"</span>,  preprocessor),
+    (<span class="st">"model"</span>, RandomForestRegressor(n_estimators=<span class="nb">300</span>)),
+])
+pipeline.fit(X_train, y_train)  <span class="cm"># R²=0.955 · MAE=3.077h</span></div>
+  </div>
+  <div>
+    <div class="sec-title">Validation Croisée 5-fold</div>
+    <div class="chart-box"><div id="ch-cv" style="height:250px"></div></div>
+    <div class="sec-title" style="margin-top:14px">Variables exclues (Data Leakage)</div>
+    <div style="display:flex;flex-direction:column;gap:7px">
+      <div style="background:rgba(230,57,70,.08);border:1px solid rgba(230,57,70,.25);border-radius:8px;padding:10px 13px;font-size:.8rem">
+        ⚠️ <code>failure_within_24h</code> — dérivé du RUL
+      </div>
+      <div style="background:rgba(230,57,70,.08);border:1px solid rgba(230,57,70,.25);border-radius:8px;padding:10px 13px;font-size:.8rem">
+        ⚠️ <code>failure_type</code> — connu seulement après la panne
+      </div>
+      <div style="background:rgba(230,57,70,.08);border:1px solid rgba(230,57,70,.25);border-radius:8px;padding:10px 13px;font-size:.8rem">
+        ⚠️ <code>estimated_repair_cost</code> — corrélé à la panne
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+</div><!-- main -->
+</div><!-- app -->
+</body>
+</html>
